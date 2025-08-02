@@ -1,0 +1,373 @@
+# Pseudolang for AI Code Generation
+
+This document explains how to write and interpret .pseudo files for generating fullstack TypeScript/JavaScript applications.
+
+## Core Syntax Rules
+
+### File Structure
+```
+# Comments with #
+app "ProjectName": (defines app configuration)
+domain "DomainName": (business capability grouping)
+  feature "FeatureName": (user-facing functionality)
+    declarations... (models, pages, components, etc.)
+```
+
+### Naming Conventions
+- Multi-word names: MUST use quotes "User Management" 
+- Single words: quotes optional Administration
+- Properties: snake_case with colons field_name:
+- Indentation: 2 spaces, increase for nested content
+
+## Declaration Types & Syntax
+
+### App (Project Configuration)
+```pseudo
+app "ProjectName":
+  description: "Brief description of what this application does"
+  rules: "Development guidelines and constraints for this project"
+  language: typescript|javascript
+  framework: react-router|nextjs|vue|svelte|astro
+  fullstack: true|false
+  database: prisma|drizzle|supabase|mongodb
+  styling: tailwind|css|styled-components
+  components: shadcn-ui|daisyui|chakra
+  authentication: [oauth, email]|[email]|[oauth]
+  payment: stripe|paypal (optional)
+```
+
+### Domain (Business Capability)
+```pseudo
+domain "Domain Name":
+  description: "Business purpose description"
+  # Contains: models, features, services
+```
+
+### Feature (User-Facing Capability)
+```pseudo
+feature "Feature Name":
+  description: "What users accomplish"
+  # Contains: pages, components, workflows
+```
+
+### Model (Data Structure)
+```pseudo
+model ModelName:
+  id: uuid required unique
+  field_name: type modifiers
+  relationship_field: RelatedModel
+  created_at: date
+  updated_at: date
+```
+
+### Page (Application Route)
+```pseudo
+page "Page Name":
+  path: "/url/path/:param?"
+  guard: auth_requirement
+  state: local_var = initial_value
+  
+  loads:
+    # initialization
+  
+  show:
+    # UI elements
+```
+
+### Component (Reusable UI)
+```pseudo
+component ComponentName:
+  props: PropType
+  state: component_state = initial
+  
+  show:
+    # component UI
+    
+  when event:
+    # event handling
+```
+
+### Route (API Endpoint)
+```pseudo
+route METHOD /api/path:
+  guard: auth_rule
+  request: RequestType
+  response: ResponseType
+  validate: validation_rules
+  action:
+    # processing logic
+    return: result
+```
+
+### Request/Response Types
+```pseudo
+request TypeName:
+  field: type modifiers
+
+response TypeName:
+  field: type
+```
+
+### Service (Business Logic)
+```pseudo
+service ServiceName:
+  method_name: (params) -> ReturnType
+
+repository RepositoryName:
+  find: (id) -> EntityType
+  create: (data) -> EntityType
+  update: (id, data) -> EntityType
+  delete: (id) -> boolean
+```
+
+### Auth & Guards
+```pseudo
+auth AuthName:
+  login: email, password
+  oauth: provider1, provider2
+  session: jwt|cookie
+
+guard GuardName:
+  require: condition
+  redirect: "/path" if not authorized
+```
+
+### Form (User Input)
+```pseudo
+form FormName:
+  fields:
+    field_name: type constraints
+  validate:
+    validation_rules
+  submit:
+    action_to_take
+```
+
+## Data Types & Modifiers
+
+### Primitive Types
+- string, number, boolean, date, uuid, url
+- array[Type], object
+
+### Constants
+- null, false, true, empty, undefined, now, today
+
+### Modifiers
+- required, optional, unique, indexed
+- default(value), min(n), max(n)
+
+### Examples
+```pseudo
+email: string required unique
+age: number optional min(0) max(120)
+tags: array[string] optional
+settings: object default({})
+```
+
+## Actions & Operations
+
+### CRUD: create, update, delete, query, list
+### UI: show, hide, toggle, redirect, ask
+### Data: add, remove, validate, transform, filter, sort, paginate
+### System: authenticate, authorize, send, schedule, await
+### Logical: and, or, not, lt, gt, lte, gte, eq, neq, between, is, in
+### Functions: contains, includes, startsWith, endsWith, matches
+### Flow: return, throw, default
+
+## Control Flow Patterns
+
+### Conditionals
+```pseudo
+if condition:
+  actions
+else:
+  alternative_actions
+```
+
+### Loops
+```pseudo
+for each item in collection:
+  process item
+```
+
+### Events
+```pseudo
+when trigger:
+  response_actions
+
+when user clicks element:
+  handle_click
+
+when DOM is loaded:
+  initialize
+
+when form submits:
+  process_form
+```
+
+### Error Handling
+```pseudo
+try:
+  risky_operation
+catch ErrorType:
+  handle_error
+```
+
+## AI Code Generation Guidelines
+
+### 1. Domain-Driven Organization
+- Group related models, features in logical domains
+- Domains represent business capabilities
+- Features represent complete user workflows
+
+### 2. Natural Language Focus
+- Write descriptions that explain business value
+- Use human-readable field names and actions
+- Avoid technical implementation details
+
+### 3. Context-Aware Generation
+- Infer relationships from model references
+- Generate appropriate validation based on types
+- Create consistent API patterns across features
+
+### 4. Progressive Detail
+- Start with high-level domains and features
+- Add models and data structures
+- Define pages and user interactions
+- Specify API routes and business logic
+
+### 5. Code Generation Mapping
+
+#### App → Project Configuration
+- framework: react-router-7 → React Router v7 setup
+- database: prisma → Prisma schema and client
+- styling: tailwind → Tailwind CSS configuration
+- authentication: [oauth, email] → Auth provider setup
+
+#### Model → Database Schema
+```pseudo
+model User:
+  id: uuid required unique
+  email: string required unique
+```
+→ Generate Prisma schema, TypeScript types, validation
+
+#### Page → Route Component
+```pseudo
+page "User Profile":
+  path: "/profile/:id"
+  guard: RequireAuth
+```
+→ Generate React Router route, component, auth guard
+
+#### Route → API Handler
+```pseudo
+route POST /api/users:
+  request: CreateUserRequest
+  response: UserResponse
+```
+→ Generate API route handler, types, validation
+
+#### Form → Form Component
+```pseudo
+form LoginForm:
+  fields:
+    email: string required
+    password: string required
+```
+→ Generate form component with validation
+
+### 6. Logical Operations & Functions
+
+#### Comparisons
+```pseudo
+if user.age gt 18 and user.status eq "active":
+  allow access
+
+if price between 10 and 100:
+  show discount
+
+if email contains "@company.com":
+  mark as internal user
+```
+
+#### Built-in Functions
+```pseudo
+if username startsWith "admin_":
+  grant admin privileges
+
+if content includes "urgent":
+  prioritize request
+
+if filename endsWith ".pdf":
+  process document
+```
+
+#### Constants
+```pseudo
+state loading: boolean = false
+response: UserData | null = null
+created_at: date = now
+expires_at: date = today + 7 days
+```
+
+### 7. Comments
+- Use # or // for single-line comments
+- Document business logic and complex conditions
+- Explain non-obvious relationships and constraints
+
+### 8. Best Practices for AI
+
+- **Consistency**: Use the same patterns throughout the file
+- **Completeness**: Include all necessary models, relationships, and workflows
+- **Clarity**: Write clear descriptions and logical field names
+- **Validation**: Specify modifiers and business rules
+- **Security**: Include appropriate guards and authentication
+- **User Experience**: Focus on complete user workflows
+
+### 9. Common Patterns
+
+#### Authentication Flow
+```pseudo
+domain "User Management":
+  model User: ...
+  feature "User Login": ...
+  guard RequireAuth: ...
+```
+
+#### CRUD Resource
+```pseudo
+feature "Post Management":
+  page "Post List": # list all
+  page "Post Detail": # view one
+  page "Post Editor": # create/edit
+  route GET /api/posts: # list API
+  route POST /api/posts: # create API
+  route PUT /api/posts/:id: # update API
+  route DELETE /api/posts/:id: # delete API
+```
+
+#### Master-Detail Relationship
+```pseudo
+model Category:
+  id: uuid required unique
+  name: string required
+
+model Product:
+  id: uuid required unique
+  category: Category required
+  name: string required
+```
+
+### 10. Generation Order
+1. Parse app configuration
+2. Create project structure and dependencies
+3. Generate models and database schema
+4. Create API routes and handlers
+5. Generate pages and components
+6. Set up authentication and guards
+7. Create forms and validation
+8. Add business logic services
+9. Configure routing and navigation
+
+This specification enables AI systems to understand pseudolang files and generate complete, production-ready fullstack applications following modern development practices.

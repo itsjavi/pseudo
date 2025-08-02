@@ -1,0 +1,386 @@
+# Fullstack Blog App Example
+# This showcases a complete blog application with authentication, CRUD operations, and more
+
+app "BlogPlatform":
+  description: "A full-featured blog platform with user authentication, content management, and premium subscriptions"
+  rules: "Prioritize content creator experience. Ensure all content is properly moderated. Follow accessibility guidelines and SEO best practices"
+  language: typescript
+  framework: react-router-7
+  fullstack: true
+  database: drizzle
+  styling: tailwind
+  components: shadcn
+  authentication: [oauth, email]
+  payment: stripe
+
+# Configuration
+config:
+  database_url: env.DATABASE_URL
+  stripe_key: env.STRIPE_SECRET_KEY
+  jwt_secret: env.JWT_SECRET
+  upload_path: "/uploads"
+
+# Models
+model User:
+  id: uuid required unique
+  email: email required unique
+  username: string required unique
+  password: string required
+  role: string default("user") # user, admin, premium
+  avatar: url optional
+  createdAt: date
+  updatedAt: date
+
+model Post:
+  id: uuid required unique
+  title: string required
+  slug: string required unique indexed
+  content: string required
+  excerpt: string optional
+  author: User required
+  published: boolean default(false)
+  featured: boolean default(false)
+  tags: array[string]
+  createdAt: date
+  updatedAt: date
+
+model Comment:
+  id: uuid required unique
+  content: string required
+  author: User required
+  post: Post required
+  parentComment: Comment optional
+  createdAt: date
+
+# Authentication
+auth UserAuth:
+  login: email, password
+  register: email, username, password
+  oauth: google, github
+  permissions: [read, write, admin, premium]
+  session: session_id_cookie
+
+guard RequireAuth:
+  redirect: "/login" if not authenticated
+
+guard RequireAdmin:
+  require: user.role == "admin"
+  redirect: "/unauthorized"
+
+guard RequirePremium:
+  require: user.role == "premium" or user.role == "admin"
+  show: "Upgrade to Premium" if not authorized
+
+# Requests & Responses
+request CreatePostRequest:
+  title: string required
+  content: string required
+  excerpt: string optional
+  tags: array[string] optional
+  published: boolean default(false)
+
+response PostResponse:
+  id: uuid
+  title: string
+  slug: string
+  content: string
+  excerpt: string
+  author: UserResponse
+  published: boolean
+  tags: array[string]
+  createdAt: date
+  updatedAt: date
+
+response UserResponse:
+  id: uuid
+  username: string
+  avatar: url
+
+# API Routes
+route GET /api/posts:
+  response: array[PostResponse]
+  query: query posts where published == true
+  transform: posts with author data
+  return: posts
+
+route POST /api/posts:
+  guard: RequireAuth
+  request: CreatePostRequest
+  response: PostResponse
+  validate: title length > 0 and content length > 10
+  action:
+    create post with data from request
+    if user.role == "admin" then auto-publish
+    return: created post
+
+route GET /api/posts/:slug:
+  response: PostResponse
+  action:
+    query post where slug == params.slug
+    if not found then return 404
+    return: post with author and comments
+
+route PUT /api/posts/:id:
+  guard: RequireAuth
+  request: CreatePostRequest
+  response: PostResponse
+  validate: user owns post or user.role == "admin"
+  action:
+    update post where id == params.id
+    return: updated post
+
+route DELETE /api/posts/:id:
+  guard: RequireAuth
+  validate: user owns post or user.role == "admin"
+  action:
+    delete post where id == params.id
+    return: success message
+
+# Services
+service PostService:
+  createPost: (data, user) -> Post
+  updatePost: (id, data, user) -> Post
+  deletePost: (id, user) -> boolean
+  getPublishedPosts: () -> array[Post]
+  getPostBySlug: (slug) -> Post
+  getUserPosts: (userId) -> array[Post]
+
+service UserService:
+  register: (email, username, password) -> User
+  login: (email, password) -> auth token
+  updateProfile: (userId, data) -> User
+  upgradeToPremium: (userId) -> User
+
+# Repository
+repository PostRepository:
+  find: (id) -> Post
+  findBySlug: (slug) -> Post
+  findPublished: () -> array[Post]
+  findByAuthor: (authorId) -> array[Post]
+  create: (data) -> Post
+  update: (id, data) -> Post
+  delete: (id) -> boolean
+
+repository UserRepository:
+  find: (id) -> User
+  findByEmail: (email) -> User
+  findByUsername: (username) -> User
+  create: (data) -> User
+  update: (id, data) -> User
+
+# Forms
+form LoginForm:
+  fields:
+    email: email required
+    password: string required min(6)
+  validate:
+    email format is valid
+    password length >= 6
+  submit:
+    authenticate user
+    redirect: "/dashboard" if success
+    show: error message if failed
+
+form CreatePostForm:
+  fields:
+    title: string required max(200)
+    content: string required min(10)
+    excerpt: string optional max(500)
+    tags: array[string] optional
+    published: boolean default(false)
+  validate:
+    title is not empty
+    content length > 10
+  submit:
+    create post
+    redirect: "/posts/{slug}" if success
+    show: validation errors if failed
+
+# State Management
+state user: User | null = null
+state posts: array[Post] = []
+state loading: boolean = false
+state error: string | null = null
+
+# Events
+event UserLoggedIn:
+  trigger: fetch user posts
+  trigger: redirect to dashboard
+
+event PostCreated:
+  trigger: add to posts list
+  trigger: show success notification
+  trigger: send email to subscribers if published
+
+event PostDeleted:
+  trigger: remove from posts list
+  trigger: show confirmation
+
+# Pages
+page Home:
+  path: "/"
+  guard: none
+  state: featuredPosts = []
+  
+  load:
+    query posts where featured == true limit 3
+    set featuredPosts = result
+  
+  show:
+    Hero section with site title
+    Featured posts grid
+    Call to action "Start Reading"
+
+page Login:
+  path: "/login"
+  guard: redirect to "/dashboard" if authenticated
+  
+  show:
+    LoginForm
+    Link to register page
+    OAuth buttons for google, github
+
+page Dashboard:
+  path: "/dashboard"
+  guard: RequireAuth
+  state: userPosts = []
+  
+  load:
+    query posts where author == user.id
+    set userPosts = result
+  
+  show:
+    Welcome message with user.username
+    "Create New Post" button
+    List of user posts with edit/delete actions
+    if user.role == "admin" then show admin panel link
+
+page PostEditor:
+  path: "/posts/:id/edit"
+  guard: RequireAuth
+  state: post = null
+  state: isEditing = false
+  
+  load:
+    if params.id exists:
+      query post where id == params.id
+      validate user owns post or user.role == "admin"
+      set post = result
+      set isEditing = true
+  
+  show:
+    CreatePostForm with post data if editing
+    Preview panel
+    Save draft / publish buttons
+    Delete button if editing and user owns post
+
+page PostDetail:
+  path: "/posts/:slug"
+  state: post = null
+  state: comments = []
+  
+  load:
+    query post where slug == params.slug
+    if not found then redirect to "/404"
+    query comments where post.id == post.id
+    set post = result
+    set comments = result
+  
+  show:
+    Post title, content, author info
+    Tags list
+    Comments section
+    if authenticated then show comment form
+    if user owns post then show edit/delete buttons
+
+# Components
+component PostCard:
+  props: post (Post)
+  
+  show:
+    Card with post.title as heading
+    Post excerpt or content preview
+    Author name and avatar
+    Published date
+    Tags as badges
+    "Read More" link to post detail
+
+component CommentForm:
+  guard: RequireAuth
+  state: content = ""
+  
+  show:
+    Textarea for comment content
+    Submit button
+    
+  when submit button clicked:
+    validate content is not empty
+    create comment with content, user, post
+    add comment to comments list
+    clear content field
+
+component Navigation:
+  show:
+    Site logo/title
+    Links: Home, Posts, About
+    if authenticated:
+      User menu with Dashboard, Profile, Logout
+    else:
+      Login and Register buttons
+
+component AdminPanel:
+  guard: RequireAdmin
+  state: allPosts = []
+  state: allUsers = []
+  
+  loads:
+    query all posts
+    query all users
+    set allPosts = result
+    set allUsers = result
+  
+  show:
+    Tabs for Posts, Users, Analytics
+    Posts tab: list all posts with publish/unpublish actions
+    Users tab: list users with role management
+    Analytics: post views, user registrations
+
+# Error Handling
+try:
+  execute any database operation
+catch DatabaseError:
+  log error
+  show: "Something went wrong. Please try again."
+  
+try:
+  authenticate user
+catch AuthenticationError:
+  redirect: "/login"
+  show: "Please log in to continue"
+
+try:
+  upload file
+catch UploadError:
+  show: "File upload failed. Please try a smaller file."
+
+# Background Jobs
+event schedule:
+  every: "0 0 * * *" # daily at midnight
+  action: cleanup expired sessions
+
+event schedule:
+  every: "0 0 * * 0" # weekly on sunday
+  action: send newsletter to subscribers
+
+# Payment Integration (for premium features)
+service PaymentService:
+  createSubscription: (userId, plan) -> subscription
+  cancelSubscription: (subscriptionId) -> boolean
+  handleWebhook: (event) -> void
+
+route POST /api/stripe/webhook:
+  validate: stripe signature
+  action:
+    handle payment success
+    upgrade user to premium
+    send confirmation email

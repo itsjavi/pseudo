@@ -1,0 +1,177 @@
+{
+  "name": "Pseudo",
+  "scopeName": "source.pseudo",
+  "fileTypes": ["pseudo"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#constants" },
+    { "include": "#types" },
+    { "include": "#declarations" },
+    { "include": "#properties" },
+    { "include": "#keywords" },
+    { "include": "#functions" },
+    { "include": "#variables" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.pseudo",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.pseudo",
+          "match": "\/\/.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.pseudo",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.pseudo",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.pseudo",
+          "match": "\\b\\d+(?:\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.pseudo",
+          "match": "\\b(?:null|false|true|empty|undefined|now|today)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.primitive.pseudo",
+          "match": "\\b(?:string|number|boolean|array|object|date|url|uuid)\\b"
+        },
+        {
+          "name": "storage.type.modifier.pseudo",
+          "match": "\\b(?:required|optional|unique|indexed)\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.flow.pseudo",
+          "match": "\\b(?:if|else|for\\s+each|when|try|catch|is|in|return|throw|default)\\b"
+        },
+        {
+          "name": "keyword.control.logical.pseudo",
+          "match": "\\b(?:and|or|not|lt|gt|lte|gte|eq|neq|between)\\b"
+        },
+        {
+          "name": "keyword.control.action.pseudo",
+          "match": "\\b(?:show|hide|toggle|create|update|delete|add|remove|query|list|redirect|ask|send|authenticate|authorize|transform|filter|sort|paginate|schedule|await)\\b"
+        },
+        {
+          "name": "keyword.declaration.pseudo",
+          "match": "\\b(?:app|domain|feature|model|state|component|page|request|response|route|auth|guard|form|service|repository|config|event)\\b"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "meta.declaration.pseudo",
+          "begin": "\\b(app|domain|model|feature|component|page|request|response|route|auth|guard|form|service|repository|config|event|state)\\s+(\"[^\"]+\"|[A-Za-z_][A-Za-z0-9_]*)",
+          "beginCaptures": {
+            "1": { "name": "keyword.declaration.pseudo" },
+            "2": { "name": "entity.name.type.pseudo" }
+          },
+          "end": ":",
+          "patterns": []
+        },
+        {
+          "name": "meta.route.pseudo",
+          "begin": "\\b(route)\\s+(GET|POST|PUT|DELETE|PATCH)\\s+([^:]+)",
+          "beginCaptures": {
+            "1": { "name": "keyword.declaration.pseudo" },
+            "2": { "name": "keyword.other.http-method.pseudo" },
+            "3": { "name": "string.unquoted.route-path.pseudo" }
+          },
+          "end": ":",
+          "patterns": []
+        },
+        {
+          "name": "meta.feature.pseudo",
+          "begin": "\\b(feature)\\s+(\"[^\"]+\"|[A-Za-z_][A-Za-z0-9_]*)",
+          "beginCaptures": {
+            "1": { "name": "keyword.declaration.pseudo" },
+            "2": { "name": "entity.name.function.pseudo" }
+          },
+          "end": ":",
+          "patterns": []
+        },
+        {
+          "name": "meta.domain.pseudo",
+          "begin": "\\b(domain)\\s+(\"[^\"]+\"|[A-Za-z_][A-Za-z0-9_]*)",
+          "beginCaptures": {
+            "1": { "name": "keyword.declaration.pseudo" },
+            "2": { "name": "entity.name.namespace.pseudo" }
+          },
+          "end": ":",
+          "patterns": []
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "variable.other.property.pseudo",
+          "match": "^\\s*([a-z_][a-zA-Z0-9_]*)\\s*:",
+          "captures": {
+            "1": { "name": "variable.other.property.pseudo" }
+          }
+        },
+        {
+          "name": "variable.other.property.nested.pseudo",
+          "match": "\\s{2,}([a-z_][a-zA-Z0-9_]*)\\s*:",
+          "captures": {
+            "1": { "name": "variable.other.property.pseudo" }
+          }
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.pseudo",
+          "match": "\\b[a-z_][a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name": "variable.other.constant.pseudo",
+          "match": "\\b[A-Z_][A-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "function.pseudo",
+          "match": "\\b(?:contains|includes|startsWith|endsWith|matches)\\b"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "comments": {
+    "lineComment": "#"
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "\"", "close": "\"", "notIn": ["string"] },
+    { "open": "'", "close": "'", "notIn": ["string"] },
+    { "open": "(", "close": ")" },
+    { "open": "[", "close": "]" },
+    { "open": "{", "close": "}" }
+  ],
+  "surroundingPairs": [
+    { "open": "\"", "close": "\"" },
+    { "open": "'", "close": "'" },
+    { "open": "(", "close": ")" },
+    { "open": "[", "close": "]" },
+    { "open": "{", "close": "}" }
+  ],
+  "wordPattern": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b",
+  "onEnterRules": [
+    {
+      "beforeText": "^\\s*(domain|feature|model|component|page|form|service|repository|auth|guard|config|event|state)\\s+.*:$",
+      "action": { "indent": "indent" }
+    },
+    {
+      "beforeText": "^\\s*(when|if|try|for\\s+each).*:$",
+      "action": { "indent": "indent" }
+    }
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(domain|feature|model|component|page|request|response|route|auth|guard|form|service|repository|config|event|state|try|when|if|for\\s+each).*:$",
+    "decreaseIndentPattern": "^\\s*(else|catch)\\b"
+  },
+  "folding": {
+    "markers": {
+      "start": "^\\s*(domain|feature|model|component|page|request|response|route|auth|guard|form|service|repository|config|event|state).*:$",
+      "end": "^\\s*$"
+    }
+  }
+}

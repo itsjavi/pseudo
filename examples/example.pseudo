@@ -1,0 +1,43 @@
+app "TodoApp":
+  description: "A simple todo list application where users can add, complete, and delete tasks"
+  rules: "Keep the interface clean and intuitive. Focus on core functionality without unnecessary features"
+  language: typescript # or javascript
+  framework: react-router-7 # or vue, svelte, nextjs, astro, solidjs, etc.
+  fullstack: true # or false (for SSG or SPAs)
+  database: prisma # or drizzle
+  styling: tailwind # or css
+  components: shadcn # or daisyui, tailwind
+  authentication: [oauth, email] # any of: oauth, email
+
+# this is a comment
+
+model TodoItem:
+  id: number
+  title: string
+  completed: boolean
+
+state todos: TodoItem[] = []
+
+component TodoApp:
+  Show heading "Todo List".
+
+  Show an input field named "title" with placeholder "Add a todo...".
+  Show a button labeled "Add".
+
+  When the add button is clicked,
+    If the title field is not empty,
+      Create a new TodoItem with id generateId(), title title, completed false.
+      Add the new TodoItem to todos.
+      Clear the title field.
+    Else,
+      Do nothing.
+
+  For each todo in todos,
+    Show a list item:
+      Show a checkbox bound to todo.completed.
+      Show the todo.title.
+      Show a button labeled "Delete".
+      When the checkbox is toggled,
+        Toggle todo.completed.
+      When the delete button is clicked,
+        Remove todo from todos.

@@ -1,0 +1,473 @@
+# Pokedex Web App
+# A comprehensive Pokemon tracking application where users can login with Google OAuth
+# and maintain a personal checklist of Pokemon they've caught or seen.
+# Pokemon data source: https://static-data.pokepc.net/data/pokemon-index.min.json
+
+app "Pokedex":
+  description: "A Pokemon tracking application where trainers can catalog their Pokemon encounters and build custom collections"
+  rules: "Keep the Pokemon theme consistent throughout. Ensure fast search and filtering. Make the interface fun and engaging for Pokemon fans of all ages"
+  devRules: "Use: pnpm, react-router 7 in SSR mode with loaders and actions, zod for validation, shadcn-ui for components, tailwind for styling, prisma for database, and better-auth for authentication."
+  language: typescript
+  framework: "react-router" // v7 or greater, which is full-stack
+  fullstack: true
+  database: prisma
+  styling: tailwind
+  components: "shadcn-ui"
+  authentication: [oauth]
+
+domain "User Accounts":
+  description: "Users can sign in with Google and manage their profile"
+
+  model User:
+    id: uuid required unique
+    email: string required unique
+    name: string required
+    avatar: url optional
+    google_id: string required unique
+    created_at: date
+    updated_at: date
+
+  auth GoogleAuth:
+    oauth: google
+    session: jwt
+    redirect_success: "/dashboard"
+    redirect_failure: "/login"
+
+  guard RequireAuth:
+    redirect: "/login" if not authenticated
+
+domain "Pokemon Collection":
+  description: "Users can discover Pokemon and track which ones they've caught"
+
+  model Pokemon:
+    id: number required unique # Pokemon National Dex number
+    name: string required
+    types: array[string] required
+    sprite_url: url optional
+    generation: number required
+    region: string required
+    height: number optional
+    weight: number optional
+    stats: object optional # base stats like HP, Attack, etc.
+    abilities: array[string] optional
+    description: string optional
+    evolution_chain: object optional
+
+  model UserPokemon:
+    id: uuid required unique
+    user: User required
+    pokemon: Pokemon required
+    status: string required default("not_caught") # not_caught, seen, caught, favorite
+    caught_date: date optional
+    location_caught: string optional
+    notes: string optional
+    created_at: date
+    updated_at: date
+
+  model Collection:
+    id: uuid required unique
+    user: User required
+    name: string required
+    description: string optional
+    is_public: boolean default(false)
+    created_at: date
+    updated_at: date
+
+  model CollectionPokemon:
+    id: uuid required unique
+    collection: Collection required
+    pokemon: Pokemon required
+    added_at: date
+
+# Features
+feature "Authentication":
+  description: "Users can sign in with Google OAuth to access their personal Pokedex"
+
+  page Login:
+    path: "/login"
+    guard: redirect to "/dashboard" if authenticated
+    
+    show:
+      Hero section with Pokedex logo
+      "Gotta Catch 'Em All!" tagline
+      "Sign in with Google" button
+      Pokemon-themed background animation
+      
+    when user clicks google sign in:
+      redirect to google oauth
+      handle oauth callback
+      create or find user account
+      redirect to dashboard
+      
+    when user logs in successfully:
+      fetch user's pokemon collection
+      fetch user's completion stats
+      show welcome message
+
+feature "Pokemon Discovery":
+  description: "Users can browse, search, and discover Pokemon"
+
+  # Keep Pokemon data fresh and fast
+  cache pokemon_list for 1 hour
+  
+  # Sync Pokemon data weekly  
+  every sunday at midnight:
+    fetch latest pokemon data from API
+    update local pokemon database
+    
+  page "Pokemon List":
+    path: "/pokemon"
+    state: filtered_pokemon = []
+    state: current_page = 1
+    state: total_pages = 1
+    
+    loads:
+      fetch pokemon list with current filters
+      set filtered_pokemon = result
+      
+    show:
+      Search bar with pokemon name input
+      Type filter checkboxes (Fire, Water, Grass, etc.)
+      Generation selector dropdown
+      "Clear Filters" button
+      Pokemon grid with infinite scroll
+      
+    for each pokemon in filtered_pokemon:
+      show: PokemonCard component
+      
+    when user types in search:
+      debounce search query
+      filter pokemon by name
+      update filtered_pokemon
+      
+    when user selects type filter:
+      add/remove type from selected_types
+      filter pokemon by selected types
+      update filtered_pokemon
+      
+    when user selects generation:
+      set selected_generation
+      filter pokemon by generation
+      update filtered_pokemon
+
+  page "Pokemon Detail":
+    path: "/pokemon/:id"
+    state: pokemon = null
+    state: user_pokemon = null
+    
+    loads:
+      fetch pokemon details where id == params.id
+      if authenticated then fetch user pokemon status
+      set pokemon = result
+      set user_pokemon = result
+      
+    show:
+      Pokemon image/sprite
+      Name and National Dex number
+      Type badges
+      Height, weight, generation info
+      Base stats chart
+      Abilities list
+      Description text
+      Evolution chain if available
+      
+      if authenticated:
+        Status selector (Not Caught, Seen, Caught, Favorite)
+        Date caught input if status is caught
+        Location caught input if status is caught
+        Personal notes textarea
+        "Save Changes" button
+        
+    when user changes status:
+      update user pokemon record
+      show success notification
+      refresh user stats
+      update completion progress
+
+feature "Personal Pokedex":
+  description: "Users can track their Pokemon collection and view progress"
+
+  # Keep user stats reasonably fresh
+  cache user_stats for 5 minutes per user
+  
+  # Clean up old data daily
+  every day at 2am:
+    remove expired user sessions
+    cleanup old activity logs
+
+  page Dashboard:
+    path: "/dashboard"
+    guard: RequireAuth
+    state: recent_catches = []
+    state: daily_goal = null
+    
+    loads:
+      fetch user stats
+      fetch recent pokemon updates (last 10)
+      set user_stats = result
+      set recent_catches = result
+      
+    show:
+      Welcome message with user name
+      Progress overview cards:
+        Total caught vs total available
+        Completion percentage
+        Favorite count
+        Recent activity
+        
+      Quick actions:
+        "Browse Pokemon" button
+        "Random Pokemon" button
+        "View Collections" button
+        
+      Generation completion chart
+      Recent catches/updates list
+      Achievement badges (if implemented)
+      
+    when user clicks random pokemon:
+      fetch random uncaught pokemon
+      redirect to pokemon detail page
+
+  page "My Pokedex":
+    path: "/pokedex"
+    guard: RequireAuth
+    state: filter_status = "all" # all, caught, seen, favorites, not_caught
+    state: user_pokemon_list = []
+    
+    loads:
+      fetch user pokedex with pokemon details
+      set user_pokemon_list = result
+      
+    show:
+      Status filter tabs (All, Caught, Seen, Favorites, Not Caught)
+      Generation filter dropdown
+      Search bar
+      Sort options (Name, Date Caught, National Dex)
+      
+      Grid view toggle / List view toggle
+      
+      for each user_pokemon in filtered list:
+        show: UserPokemonCard component
+        
+    when user changes filter:
+      filter user_pokemon_list by status
+      update displayed list
+      
+    when user clicks pokemon:
+      redirect to pokemon detail page
+
+feature "Collections":
+  description: "Users can create custom Pokemon collections and share them"
+
+  page "Collections":
+    path: "/collections"
+    state: public_collections = []
+    state: user_collections = []
+    
+    loads:
+      fetch public collections
+      if authenticated then fetch user collections
+      set public_collections = result
+      set user_collections = result
+      
+    show:
+      if authenticated:
+        "Create New Collection" button
+        "My Collections" section with user_collections
+        
+      "Public Collections" section with public_collections
+      
+    for each collection in public_collections:
+      show: CollectionCard component
+      
+    when user clicks create collection:
+      redirect to "/collections/new"
+
+  page "Collection Detail":
+    path: "/collections/:id"
+    state: collection = null
+    state: collection_pokemon = []
+    
+    loads:
+      fetch collection details where id == params.id
+      fetch pokemon in collection
+      set collection = result
+      set collection_pokemon = result
+      
+    show:
+      Collection name and description
+      Created by user info
+      Pokemon count
+      Created date
+      
+      if user owns collection:
+        "Edit Collection" button
+        "Delete Collection" button
+        "Add Pokemon" button
+        
+      Pokemon grid showing collection_pokemon
+      
+    for each pokemon in collection_pokemon:
+      show: PokemonCard component
+      if user owns collection:
+        show: "Remove" button
+
+  page "Create Collection":
+    path: "/collections/new"
+    guard: RequireAuth
+    state: collection_name = ""
+    state: collection_description = ""
+    state: is_public = false
+    
+    show:
+      "Create New Collection" heading
+      Name input field (required)
+      Description textarea (optional)
+      "Make Public" checkbox
+      "Create Collection" button
+      "Cancel" button
+      
+    when user clicks create:
+      validate name is not empty
+      create collection with current user
+      redirect to collection detail page
+      show success notification
+
+# Components
+component PokemonCard:
+  props: pokemon (Pokemon), user_pokemon (UserPokemon) optional
+  
+  show:
+    Card container with hover effects
+    Pokemon sprite image
+    Pokemon name and #dex number
+    Type badges with type colors
+    Generation badge
+    
+    if user_pokemon exists:
+      Status indicator (caught/seen/favorite icon)
+      Caught date if available
+      
+    when user clicks card:
+      redirect to pokemon detail page
+
+component UserPokemonCard:
+  props: user_pokemon (UserPokemon)
+  
+  show:
+    Pokemon sprite and basic info
+    Status badge (caught/seen/favorite)
+    Caught date if status is caught
+    Location if available
+    Personal notes preview
+    Quick action buttons (mark as favorite, edit)
+    
+  when user clicks quick favorite:
+    toggle favorite status
+    update user pokemon record
+    show success feedback
+
+component CollectionCard:
+  props: collection (Collection)
+  
+  show:
+    Collection name and description
+    Created by user name
+    Pokemon count
+    Preview of first 4 pokemon sprites
+    Public/Private indicator
+    Created date
+    
+  when user clicks card:
+    redirect to collection detail page
+
+component TypeBadge:
+  props: type (string)
+  
+  show:
+    Badge with type name
+    Background color based on type (Fire = red, Water = blue, etc.)
+    Type icon if available
+
+component StatsChart:
+  props: stats (object)
+  
+  show:
+    Radar chart or bar chart of base stats
+    HP, Attack, Defense, Sp. Attack, Sp. Defense, Speed
+    Color-coded bars
+    Total stats number
+
+component ProgressRing:
+  props: current (number), total (number), label (string)
+  
+  show:
+    Circular progress indicator
+    Current / total text in center
+    Label below ring
+    Percentage completion
+
+component Navigation:
+  show:
+    Pokedex logo/title
+    Navigation links: Pokemon, Collections, Pokedex (if authenticated)
+    
+    if authenticated:
+      User menu with avatar, Dashboard, Profile, Logout
+    else:
+      "Sign In" button
+
+component SearchBar:
+  props: placeholder (string), on_search (function)
+  state: query = ""
+  
+  show:
+    Search input with pokemon-themed icon
+    "Clear" button if query is not empty
+    Search suggestions dropdown if query length > 2
+    
+  when user types:
+    set query = input value
+    debounce call to on_search function
+    
+  when user clicks suggestion:
+    set query = suggestion
+    call on_search with suggestion
+
+component FilterPanel:
+  props: types (array), generations (array), on_filter (function)
+  state: selected_types = []
+  state: selected_generation = null
+  
+  show:
+    "Filters" heading
+    Type checkboxes with type colors
+    Generation radio buttons
+    "Clear All" button
+    
+  when user selects type:
+    toggle type in selected_types
+    call on_filter with current selections
+    
+  when user selects generation:
+    set selected_generation
+    call on_filter with current selections
+
+# Admin Features (bonus)
+feature "Admin Panel":
+  description: "Admin users can manage Pokemon data and user accounts"
+
+  page "Admin Dashboard":
+    path: "/admin"
+    guard: require user is admin
+    
+    show:
+      System overview with total users and Pokemon count
+      "Sync Pokemon Data" button
+      User activity summary
+      
+    when admin clicks sync data:
+      fetch latest Pokemon from external API
+      update local Pokemon database
+      show sync progress and results
+      notify admin when complete

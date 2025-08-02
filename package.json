@@ -1,0 +1,76 @@
+{
+  "name": "pseudo-language-server",
+  "displayName": "Pseudo Language Server",
+  "description": "Language server for Pseudo - a natural language for people and AI agents to generate fullstack web applications.",
+  "version": "0.1.4",
+  "publisher": "developer",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itsjavi/pseudo"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "scripts": {
+    "build": "npm run bundle && vsce package",
+    "bundle": "tsup",
+    "watch": "tsup --watch",
+    "format": "npx prettier --write .",
+    "vscode:prepublish": "npm run bundle"
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "pseudo",
+        "aliases": [
+          "Pseudo",
+          "pseudo"
+        ],
+        "extensions": [
+          ".pseudo"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pseudo",
+        "scopeName": "source.pseudo",
+        "path": "./syntaxes/pseudo.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.pseudo.codeblock",
+        "path": "./syntaxes/pseudo-injection.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.pseudo": "pseudo"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pseudo",
+        "path": "./snippets/pseudo.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "@types/vscode": "1.99.0",
+    "@vscode/vsce": "^3.6.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.2"
+  }
+}

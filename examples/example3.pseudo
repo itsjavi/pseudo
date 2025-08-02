@@ -1,0 +1,387 @@
+# BlogCraft - A Modern Blogging Platform
+# Written for product owners, designers, and developers to understand together
+
+app "BlogCraft":
+  description: "A modern blogging platform designed for content creators who want to focus on writing while having powerful tools for growth and engagement"
+  rules: "Prioritize writer experience and content discoverability. Maintain clean, distraction-free interfaces. Ensure excellent performance and SEO"
+  language: typescript
+  framework: react-router-7
+  fullstack: true
+  database: prisma
+  styling: tailwind
+  components: shadcn
+  authentication: [email, google]
+
+# === DOMAIN: User Management ===
+domain "User Management":
+  description: "Handle user registration, authentication, and profile management"
+  
+  model User:
+    id: uuid required unique
+    email: email required unique
+    username: string required unique
+    displayName: string required
+    avatar: url optional
+    role: string default("reader") # reader, writer, admin
+    emailVerified: boolean default(false)
+    createdAt: date
+    updatedAt: date
+
+  feature "User Registration":
+    description: "New users can create accounts with email verification"
+    
+    page "Register":
+      path: "/register"
+      show: "Create Your Account" heading
+      show: registration form with email, username, display name, password
+      show: "By signing up, you agree to our Terms" disclaimer
+      show: "Already have an account? Sign in" link
+      
+      when user submits form:
+        validate: email format and uniqueness
+        validate: username availability
+        validate: password strength (min 8 characters)
+        if validation passes:
+          create user account
+          send verification email
+          redirect to "Check your email" page
+        else:
+          show validation errors
+
+  feature "User Login":
+    description: "Existing users can sign in with email or Google"
+    
+    page "Login":
+      path: "/login"
+      show: "Welcome Back" heading
+      show: login form with email and password
+      show: "Sign in with Google" button
+      show: "Forgot password?" link
+      show: "New here? Create account" link
+      
+      when user submits form:
+        authenticate user credentials
+        if successful:
+          create user session
+          redirect to dashboard or intended page
+        else:
+          show "Invalid email or password" error
+
+  feature "Profile Management":
+    description: "Users can update their profile information and settings"
+    
+    page "Profile Settings":
+      path: "/profile/settings"
+      guard: require authenticated user
+      
+      show: profile form with display name, avatar, bio
+      show: account settings for email preferences
+      show: "Change Password" section
+      show: "Delete Account" button (with confirmation)
+      
+      when user updates profile:
+        validate: display name length
+        if avatar uploaded:
+          resize and save image
+        update user profile
+        show "Profile updated successfully" message
+
+# === DOMAIN: Content Creation ===
+domain "Content Creation":
+  description: "Authors can write, edit, and publish blog posts"
+
+  model Post:
+    id: uuid required unique
+    title: string required
+    slug: string required unique
+    content: string required
+    excerpt: string optional
+    author: User required
+    status: string default("draft") # draft, published, archived
+    featured: boolean default(false)
+    publishedAt: date optional
+    createdAt: date
+    updatedAt: date
+
+  model Tag:
+    id: uuid required unique
+    name: string required unique
+    slug: string required unique
+    description: string optional
+    color: string default("#3B82F6")
+
+  feature "Writing Experience":
+    description: "Authors have a distraction-free writing environment"
+    
+    page "Post Editor":
+      path: "/editor/:id?"
+      guard: require authenticated user with writer role
+      
+      show: "New Post" or post title as heading
+      show: title input field
+      show: rich text editor for content
+      show: excerpt field for SEO
+      show: tag selector (create new or select existing)
+      show: "Save Draft" and "Publish" buttons
+      show: preview panel (toggle)
+      
+      when user types:
+        auto-save draft every 30 seconds
+        update word count
+        
+      when user publishes:
+        validate: title and content are not empty
+        if post is new:
+          generate unique slug from title
+        set status to "published"
+        set publishedAt to now
+        save post
+        redirect to published post
+        show "Post published successfully!" notification
+
+  feature "Content Management":
+    description: "Authors can manage all their posts from one place"
+    
+    page "My Posts":
+      path: "/my-posts"
+      guard: require authenticated user with writer role
+      
+      show: "My Posts" heading
+      show: "Write New Post" button
+      show: filter tabs for "All", "Published", "Drafts"
+      show: search box for posts
+      
+      for each post by current user:
+        show: post title, status, published date
+        show: "Edit", "Preview", "Delete" buttons
+        if post is draft:
+          show: "Publish" button
+        if post is published:
+          show: view count and "Unpublish" option
+
+# === DOMAIN: Reading Experience ===
+domain "Reading Experience":
+  description: "Visitors can discover and read engaging content"
+
+  feature "Content Discovery":
+    description: "Readers can find interesting posts through various ways"
+    
+    page "Home":
+      path: "/"
+      show: site header with logo and navigation
+      show: hero section with featured post
+      show: "Latest Posts" section with 6 recent posts
+      show: "Popular Tags" sidebar
+      show: "About" section
+      show: newsletter signup form
+      
+      when visitor scrolls:
+        load more posts automatically (infinite scroll)
+
+    page "Browse Posts":
+      path: "/posts"
+      show: "All Posts" heading
+      show: filter options by tag, author, date
+      show: sort options (newest, oldest, popular)
+      show: search bar
+      
+      for each published post:
+        show: post card with title, excerpt, author, date, tags
+        show: estimated reading time
+        show: "Read More" button
+
+  feature "Reading Experience":
+    description: "Readers have a clean, focused reading experience"
+    
+    page "Post Detail":
+      path: "/posts/:slug"
+      show: post title and author information
+      show: published date and reading time
+      show: full post content with proper typography
+      show: tags at the bottom
+      show: "Share this post" buttons
+      show: author bio card
+      show: "Related Posts" section
+      show: comments section if enabled
+      
+      when reader finishes:
+        show: "Thanks for reading!" message
+        show: "Follow author" button
+        suggest: "You might also like" posts
+
+# === DOMAIN: Community ===
+domain Community:
+  description: "Foster engagement through comments and social features"
+
+  model Comment:
+    id: uuid required unique
+    content: string required
+    author: User required
+    post: Post required
+    parentComment: Comment optional
+    approved: boolean default(true)
+    createdAt: date
+
+  feature "Commenting System":
+    description: "Readers can engage with content through comments"
+    
+    component Comment Thread:
+      guard: allow anonymous reading, require auth for posting
+      
+      show: comments count
+      if user is authenticated:
+        show: comment form with "Join the conversation"
+      else:
+        show: "Sign in to join the conversation" link
+      
+      for each approved comment:
+        show: author name and avatar
+        show: comment content
+        show: "Reply" button if authenticated
+        show: timestamp
+        if comment has replies:
+          show: nested replies with slight indentation
+
+  feature "Social Sharing":
+    description: "Readers can easily share posts they enjoy"
+    
+    component Share Buttons:
+      show: "Share this post" heading
+      show: Twitter share button with auto-generated text
+      show: LinkedIn share button
+      show: Facebook share button
+      show: "Copy link" button
+      
+      when user clicks share:
+        track sharing analytics
+        show: "Link copied!" for copy action
+
+# === DOMAIN: Analytics & Insights ===
+domain "Analytics & Insights":
+  description: "Authors and admins can understand content performance"
+
+  feature "Author Dashboard":
+    description: "Writers can see how their content is performing"
+    
+    page "Writer Dashboard":
+      path: "/dashboard"
+      guard: require authenticated user with writer role
+      
+      show: "Welcome back, {username}" greeting
+      show: quick stats cards (total posts, total views, comments)
+      show: "Recent Activity" feed
+      show: "Top Performing Posts" this month
+      show: "Quick Actions" (write new post, check comments)
+      
+      loads:
+        fetch user's post statistics
+        show writing streak if applicable
+
+  feature "Content Analytics":
+    description: "Understand what content resonates with readers"
+    
+    page "Post Analytics":
+      path: "/analytics/posts/:id"
+      guard: require post author or admin
+      
+      show: post title and basic info
+      show: view count over time (chart)
+      show: engagement metrics (comments, shares)
+      show: traffic sources (direct, social, search)
+      show: reader demographics if available
+      show: "Optimize for SEO" suggestions
+
+# === DOMAIN: Administration ===
+domain Administration:
+  description: "Platform management and moderation tools"
+
+  feature "User Management":
+    description: "Admins can manage users and permissions"
+    
+    page "Admin Users":
+      path: "/admin/users"
+      guard: require admin role
+      
+      show: "User Management" heading
+      show: user list with email, role, status, join date
+      show: search and filter options
+      
+      for each user:
+        show: promote/demote role buttons
+        show: "Suspend Account" option for violations
+        show: "View Activity" link
+
+  feature "Content Moderation":
+    description: "Admins can moderate posts and comments"
+    
+    page "Admin Content":
+      path: "/admin/content"
+      guard: require admin role
+      
+      show: tabs for "All Posts", "Reported Content", "Comments"
+      show: pending content requiring review
+      
+      for each reported item:
+        show: content preview and report reason
+        show: "Approve", "Remove", "Need Review" actions
+        show: option to contact author
+
+# === DOMAIN: SEO & Performance ===
+domain "SEO & Performance":
+  description: "Ensure content is discoverable and site performs well"
+
+  feature "SEO Optimization":
+    description: "Automatic and manual SEO optimizations"
+    
+    when post is published:
+      generate meta description from excerpt or content
+      create social media preview images
+      submit sitemap to search engines
+      optimize images for web performance
+      
+    component SEO Preview:
+      show: "How this will look on Google" preview
+      show: "Social media preview" for Twitter/Facebook
+      show: SEO score and improvement suggestions
+
+  feature "Performance Monitoring":
+    description: "Track site speed and user experience"
+    
+    loads:
+      measure loading time
+      track core web vitals
+      log any errors or slow queries
+      
+    page "Performance Dashboard":
+      path: "/admin/performance"
+      guard: require admin role
+      
+      show: site speed metrics
+      show: most popular content
+      show: server performance indicators
+      show: user experience scores
+
+# === USER FLOWS ===
+
+# New Visitor Journey:
+# 1. Lands on Home page → sees featured content
+# 2. Clicks on interesting post → reads full article
+# 3. Enjoys content → shares on social media
+# 4. Wants to comment → prompted to create account
+# 5. Registers → gets welcome email
+# 6. Returns → personalized reading recommendations
+
+# Writer Journey:
+# 1. Signs up → gets writer permissions
+# 2. Goes to Dashboard → sees clean writing interface
+# 3. Writes first post → saves as draft
+# 4. Previews and edits → publishes when ready
+# 5. Shares published post → tracks performance
+# 6. Engages with reader comments → builds audience
+
+# Admin Journey:
+# 1. Reviews flagged content → takes appropriate action
+# 2. Checks site analytics → identifies trends
+# 3. Manages user roles → promotes active writers
+# 4. Monitors performance → optimizes slow pages
+# 5. Updates site settings → improves user experience

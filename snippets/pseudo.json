@@ -1,0 +1,216 @@
+{
+  "Model Declaration": {
+    "prefix": "model",
+    "body": [
+      "model ${1:ModelName}:",
+      "  id: ${2:uuid} required unique",
+      "  ${3:field}: ${4:string} ${5:required}",
+      "  createdAt: date",
+      "  updatedAt: date"
+    ],
+    "description": "Create a new model definition"
+  },
+  "Component Declaration": {
+    "prefix": "component",
+    "body": [
+      "component ${1:ComponentName}:",
+      "  ${2:props}: ${3:PropType}",
+      "  ",
+      "  show:",
+      "    ${4:// component content}"
+    ],
+    "description": "Create a new component"
+  },
+  "Page Declaration": {
+    "prefix": "page",
+    "body": [
+      "page \"${1:Page Name}\":",
+      "  path: \"${2:/path}\"",
+      "  guard: ${3:none}",
+      "  state: ${4:pageState} = ${5:initialValue}",
+      "  ",
+      "  loads:",
+      "    ${6:// initialization logic}",
+      "  ",
+      "  show:",
+      "    ${7:// page content}"
+    ],
+    "description": "Create a new page"
+  },
+  "API Route": {
+    "prefix": "route",
+    "body": [
+      "route ${1:GET} ${2:/api/endpoint}:",
+      "  ${3:guard: RequireAuth}",
+      "  ${4:request: RequestType}",
+      "  response: ${5:ResponseType}",
+      "  action:",
+      "    ${6:// route logic}",
+      "    return: ${7:result}"
+    ],
+    "description": "Create an API route"
+  },
+  "Form Declaration": {
+    "prefix": "form",
+    "body": [
+      "form ${1:FormName}:",
+      "  fields:",
+      "    ${2:fieldName}: ${3:string} ${4:required}",
+      "  validate:",
+      "    ${5:// validation rules}",
+      "  submit:",
+      "    ${6:// submit action}"
+    ],
+    "description": "Create a form definition"
+  },
+  "Service Declaration": {
+    "prefix": "service",
+    "body": ["service ${1:ServiceName}:", "  ${2:methodName}: (${3:params}) -> ${4:ReturnType}"],
+    "description": "Create a service definition"
+  },
+  "Repository Declaration": {
+    "prefix": "repository",
+    "body": [
+      "repository ${1:RepositoryName}:",
+      "  find: (id) -> ${2:EntityType}",
+      "  create: (data) -> ${2:EntityType}",
+      "  update: (id, data) -> ${2:EntityType}",
+      "  delete: (id) -> boolean"
+    ],
+    "description": "Create a repository definition"
+  },
+  "Auth Guard": {
+    "prefix": "guard",
+    "body": ["guard ${1:GuardName}:", "  ${2:require: condition}", "  ${3:redirect: \"/login\" if not authorized}"],
+    "description": "Create an authentication guard"
+  },
+  "State Declaration": {
+    "prefix": "state",
+    "body": ["state ${1:stateName}: ${2:StateType} = ${3:initialValue}"],
+    "description": "Declare application state"
+  },
+  "Event Handler": {
+    "prefix": "when",
+    "body": ["when ${1:event}:", "  ${2:// event handling logic}"],
+    "description": "Create an event handler"
+  },
+  "Try-Catch Block": {
+    "prefix": "try",
+    "body": ["try:", "  ${1:// code that might fail}", "catch ${2:ErrorType}:", "  ${3:// error handling}"],
+    "description": "Create a try-catch block"
+  },
+  "For Each Loop": {
+    "prefix": "foreach",
+    "body": ["for each ${1:item} in ${2:collection}:", "  ${3:// loop body}"],
+    "description": "Create a for each loop"
+  },
+  "If Statement": {
+    "prefix": "if",
+    "body": ["if ${1:condition}:", "  ${2:// if body}", "else:", "  ${3:// else body}"],
+    "description": "Create an if-else statement"
+  },
+  "Request/Response Types": {
+    "prefix": "reqres",
+    "body": [
+      "request ${1:RequestName}:",
+      "  ${2:field}: ${3:type} ${4:required}",
+      "",
+      "response ${5:ResponseName}:",
+      "  ${6:field}: ${7:type}"
+    ],
+    "description": "Create request and response types"
+  },
+  "App Configuration": {
+    "prefix": "app",
+    "body": [
+      "app \"${1:ProjectName}\":",
+      "  description: \"${2:Brief description of what this application does}\"",
+      "  rules: \"${3:Development guidelines and constraints for this project}\"",
+      "  language: ${4|typescript,javascript|}",
+      "  framework: ${5|react-router-7,nextjs,vue,svelte,astro|}",
+      "  fullstack: ${6|true,false|}",
+      "  database: ${7|prisma,drizzle,supabase|}",
+      "  styling: ${8|tailwind,css,styled-components|}",
+      "  components: ${9|shadcn,daisyui,chakra|}",
+      "  authentication: [${10:oauth, email}]"
+    ],
+    "description": "Create app configuration"
+  },
+  "App Property - Language": {
+    "prefix": "language",
+    "body": ["language: ${1|typescript,javascript|}"],
+    "description": "Add language property"
+  },
+  "App Property - Framework": {
+    "prefix": "framework",
+    "body": ["framework: ${1|react-router-7,nextjs,vue,svelte,astro,solidjs|}"],
+    "description": "Add framework property"
+  },
+  "App Property - Database": {
+    "prefix": "database",
+    "body": ["database: ${1|prisma,drizzle,supabase,mongodb|}"],
+    "description": "Add database property"
+  },
+  "Domain Declaration": {
+    "prefix": "domain",
+    "body": [
+      "domain \"${1:Domain Name}\":",
+      "  description: \"${2:What this domain handles}\"",
+      "  ",
+      "  ${3:// nested declarations (models, features, etc.)}"
+    ],
+    "description": "Create a domain boundary"
+  },
+  "Feature Declaration": {
+    "prefix": "feature",
+    "body": [
+      "feature \"${1:Feature Name}\":",
+      "  description: \"${2:What this feature allows users to do}\"",
+      "  ",
+      "  ${3:// feature implementation}"
+    ],
+    "description": "Create a user-facing feature"
+  },
+  "Field Declaration": {
+    "prefix": "field",
+    "body": [
+      "${1:fieldName}: ${2|string,number,boolean,date,email,url,uuid,array,object|} ${3|required,optional,unique,indexed|}"
+    ],
+    "description": "Add a model field"
+  },
+  "Guard Declaration": {
+    "prefix": "guard",
+    "body": ["guard: ${1|none,require authenticated user,require admin role,RequireAuth,RequireAdmin|}"],
+    "description": "Add a guard/authorization rule"
+  },
+  "Path Declaration": {
+    "prefix": "path",
+    "body": ["path: \"${1:/route/path}\""],
+    "description": "Add a page path"
+  },
+  "Show Statement": {
+    "prefix": "show",
+    "body": ["show: ${1:what to display}"],
+    "description": "Display something on the page"
+  },
+  "When Event": {
+    "prefix": "when",
+    "body": ["when ${1|user clicks,user submits,page loads,user types|}:", "  ${2:// event handling}"],
+    "description": "Handle an event"
+  },
+  "Type Keywords": {
+    "prefix": "type",
+    "body": ["${1|string,number,boolean,date,email,url,uuid,array,object|}"],
+    "description": "Insert a type keyword"
+  },
+  "Modifier Keywords": {
+    "prefix": "modifier",
+    "body": ["${1|required,optional,unique,indexed,default|}"],
+    "description": "Insert a field modifier"
+  },
+  "Action Keywords": {
+    "prefix": "action",
+    "body": ["${1|create,update,delete,query,list,show,hide,toggle,validate,redirect,authenticate|}"],
+    "description": "Insert an action keyword"
+  }
+}
